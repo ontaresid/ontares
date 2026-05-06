@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OntaresID - Platform Investasi Digital</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Space Grotesk', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        surface: {
+                            50: '#fafbfc',
+                            100: '#f4f5f7',
+                            200: '#e4e7ec',
+                            800: '#1a1d23',
+                            900: '#12141a',
+                            950: '#0a0b0e',
+                        },
+                        accent: {
+                            DEFAULT: '#10b981',
+                            light: '#34d399',
+                            dark: '#059669',
+                        },
+                        gold: {
+                            DEFAULT: '#f59e0b',
+                            light: '#fbbf24',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        :root {
+            --bg-primary: #fafbfc;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #0a0b0e;
+            --text-secondary: #4b5563;
+            --text-muted: #9ca3af;
+            --border-color: #e5e7eb;
+            --accent: #10b981;
+            --accent-glow: rgba(16, 185, 129, 0.2);
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+        
+        .dark {
+            --bg-primary: #0a0b0e;
+            --bg-secondary: #12141a;
+            --bg-card: #1a1d23;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --text-muted: #6b7280;
+            --border-color: #2d3748;
+            --accent-glow: rgba(16, 185, 129, 0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        
+        .font-display {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        /* Background Pattern */
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.4;
+            background-image: 
+                radial-gradient(circle at 20% 20%, var(--accent-glow) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(245, 158, 11, 0.1) 0%, transparent 50%);
+        }
+        
+        .dark .bg-pattern {
+            opacity: 0.6;
+        }
+        
+        /* Grid Pattern */
+        .grid-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.03;
+            background-image: 
+                linear-gradient(var(--text-primary) 1px, transparent 1px),
+                linear-gradient(90deg, var(--text-primary) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+        
+        /* App Container */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding-bottom: 90px;
+        }
+        
+        /* Page */
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            padding: 8px 16px;
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+            display: flex;
+            justify-content: space-around;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-muted);
+        }
+        
+        .nav-item:hover {
+            background: var(--accent-glow);
+        }
+        
+        .nav-item.active {
+            color: var(--accent);
+            background: var(--accent-glow);
+        }
+        
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+        }
+        
+        .nav-item span {
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            width: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        
+        .btn-gold {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        
+        /* Input */
+        .input-group {
+            margin-bottom: 16px;
+        }
+        
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+        
+        .input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 15px;
+            transition: all 0.2s ease;
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        
+        .input::placeholder {
+            color: var(--text-muted);
+        }
+        
+        /* Coin Card */
+        .coin-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .coin-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--gold));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .coin-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .coin-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+        }
+        
+        .dark .coin-card:hover {
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        }
+        
+        /* Price Change */
+        .price-up {
+            color: #10b981;
+        }
+        
+        .price-down {
+            color: #ef4444;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 24px 24px 0 0;
+            padding: 24px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @media (min-width: 768px) {
+            .modal-overlay {
+                align-items: center;
+            }
+            .modal-content {
+                border-radius: 24px;
+                margin: 20px;
+            }
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            background: var(--border-color);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-switch.active {
+            background: var(--accent);
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .toggle-switch.active::after {
+            left: 26px;
+        }
+        
+        /* Loading */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            animation: slideDown 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 90vw;
+        }
+        
+        .toast.success {
+            border-color: var(--success);
+        }
+        
+        .toast.error {
+            border-color: var(--danger);
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Balance Card */
+        .balance-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            border-radius: 20px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .balance-amount {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Mini Chart */
+        .mini-chart {
+            height: 40px;
+            width: 80px;
+        }
+        
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* Focus Visible */
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+        
+        /* Saved Account */
+        .saved-account {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .saved-account:hover {
+            border-color: var(--accent);
+        }
+        
+        .saved-account.selected {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="bg-pattern"></div>
+    <div class="grid-pattern"></div>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- App Container -->
+    <div class="app-container">
+        
+        <!-- Auth Page -->
+        <div id="authPage" class="page active">
+            <div class="min-h-screen flex flex-col items-center justify-center p-6">
+                <div class="w-full max-w-md">
+                    <!-- Logo -->
+                    <div class="text-center mb-10" style="animation: slideUp 0.5s ease;">
+                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                <path d="M2 17l10 5 10-5"/>
+                                <path d="M2 12l10 5 10-5"/>
+                            </svg>
+                        </div>
+                        <h1 class="font-display text-3xl font-bold" style="color: var(--text-primary);">OntaresID</h1>
+                        <p class="text-sm mt-2" style="color: var(--text-secondary);">Platform Investasi Digital Terpercaya</p>
+                    </div>
+                    
+                    <!-- Auth Tabs -->
+                    <div class="flex mb-6 p-1 rounded-xl" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                        <button id="loginTab" class="flex-1 py-3 rounded-lg font-medium text-sm transition-all" style="background: var(--accent); color: white;">Masuk</button>
+                        <button id="registerTab" class="flex-1 py-3 rounded-lg font-medium text-sm transition-all" style="color: var(--text-secondary);">Daftar</button>
+                    </div>
+                    
+                    <!-- Login Form -->
+                    <form id="loginForm" class="card" style="animation: slideUp 0.6s ease;">
+                        <div class="input-group">
+                            <label for="loginEmail">Email</label>
+                            <input type="email" id="loginEmail" class="input" placeholder="nama@email.com" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="loginPassword">Password</label>
+                            <input type="password" id="loginPassword" class="input" placeholder="Masukkan password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Masuk</button>
+                        
+                        <div class="flex items-center my-4">
+                            <div class="flex-1 h-px" style="background: var(--border-color);"></div>
+                            <span class="px-4 text-sm" style="color: var(--text-muted);">atau</span>
+                            <div class="flex-1 h-px" style="background: var(--border-color);"></div>
+                        </div>
+                        
+                        <button type="button" id="googleLoginBtn" class="btn btn-secondary">
+                            <svg width="20" height="20" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            Masuk dengan Google
+                        </button>
+                    </form>
+                    
+                    <!-- Register Form -->
+                    <form id="registerForm" class="card" style="display: none;">
+                        <div class="input-group">
+                            <label for="registerName">Nama Lengkap</label>
+                            <input type="text" id="registerName" class="input" placeholder="Masukkan nama lengkap" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="registerEmail">Email</label>
+                            <input type="email" id="registerEmail" class="input" placeholder="nama@email.com" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="registerPhone">Nomor Telepon</label>
+                            <input type="tel" id="registerPhone" class="input" placeholder="08xxxxxxxxxx" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="registerPassword">Password</label>
+                            <input type="password" id="registerPassword" class="input" placeholder="Minimal 6 karakter" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Daftar Sekarang</button>
+                        
+                        <div class="flex items-center my-4">
+                            <div class="flex-1 h-px" style="background: var(--border-color);"></div>
+                            <span class="px-4 text-sm" style="color: var(--text-muted);">atau</span>
+                            <div class="flex-1 h-px" style="background: var(--border-color);"></div>
+                        </div>
+                        
+                        <button type="button" id="googleRegisterBtn" class="btn btn-secondary">
+                            <svg width="20" height="20" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            Daftar dengan Google
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main App (shown after login) -->
+        <div id="mainApp" style="display: none;">
+            
+            <!-- Home Page -->
+            <div id="homePage" class="page active">
+                <div class="p-6">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-6" style="animation: slideUp 0.3s ease;">
+                        <div>
+                            <p class="text-sm" style="color: var(--text-secondary);">Selamat datang,</p>
+                            <h2 class="font-display text-xl font-bold" id="userName">Loading...</h2>
+                        </div>
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: var(--accent-glow);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Balance Card -->
+                    <div class="balance-card mb-6" style="animation: slideUp 0.4s ease;">
+                        <p class="text-sm mb-1" style="color: rgba(255,255,255,0.6);">Total Saldo</p>
+                        <p class="balance-amount" id="balanceDisplay">Rp 0</p>
+                        <div class="flex items-center gap-2 mt-3">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">
+                                Saldo Aktif
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="grid grid-cols-2 gap-4 mb-6" style="animation: slideUp 0.5s ease;">
+                        <button id="depositBtn" class="btn btn-primary">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v14M5 12l7 7 7-7"/>
+                            </svg>
+                            Deposit
+                        </button>
+                        <button id="withdrawBtn" class="btn btn-gold">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 19V5M5 12l7-7 7 7"/>
+                            </svg>
+                            Withdraw
+                        </button>
+                    </div>
+                    
+                    <!-- Coin Market -->
+                    <div class="mb-4" style="animation: slideUp 0.6s ease;">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-display text-lg font-bold">Pasar Koin</h3>
+                            <button id="refreshMarket" class="p-2 rounded-lg transition-all hover:bg-opacity-10" style="color: var(--accent);">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M23 4v6h-6M1 20v-6h6"/>
+                                    <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-3" id="coinList">
+                            <!-- Coins will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profile Page -->
+            <div id="profilePage" class="page">
+                <div class="p-6">
+                    <h2 class="font-display text-2xl font-bold mb-6">Profil Saya</h2>
+                    
+                    <!-- Profile Card -->
+                    <div class="card mb-6">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                <span class="text-2xl font-bold text-white" id="profileInitial">U</span>
+                            </div>
+                            <div>
+                                <h3 class="font-display text-lg font-bold" id="profileName">User</h3>
+                                <p class="text-sm" style="color: var(--text-secondary);" id="profileEmail">email@example.com</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex justify-between py-3 border-b" style="border-color: var(--border-color);">
+                                <span style="color: var(--text-secondary);">Nomor Telepon</span>
+                                <span class="font-medium" id="profilePhone">-</span>
+                            </div>
+                            <div class="flex justify-between py-3 border-b" style="border-color: var(--border-color);">
+                                <span style="color: var(--text-secondary);">Status Akun</span>
+                                <span class="px-2 py-1 rounded-full text-xs font-medium" style="background: rgba(16, 185, 129, 0.1); color: var(--accent);">Terverifikasi</span>
+                            </div>
+                            <div class="flex justify-between py-3">
+                                <span style="color: var(--text-secondary);">Bergabung</span>
+                                <span class="font-medium" id="profileJoinDate">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Change Password -->
+                    <div class="card mb-6">
+                        <h4 class="font-display font-bold mb-4">Ubah Password</h4>
+                        <form id="changePasswordForm">
+                            <div class="input-group">
+                                <label for="currentPassword">Password Saat Ini</label>
+                                <input type="password" id="currentPassword" class="input" placeholder="Masukkan password lama" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="newPassword">Password Baru</label>
+                                <input type="password" id="newPassword" class="input" placeholder="Minimal 6 karakter" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="confirmPassword">Konfirmasi Password</label>
+                                <input type="password" id="confirmPassword" class="input" placeholder="Ulangi password baru" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Password</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Logout -->
+                    <button id="logoutBtn" class="btn btn-danger">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Keluar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Settings Page -->
+            <div id="settingsPage" class="page">
+                <div class="p-6">
+                    <h2 class="font-display text-2xl font-bold mb-6">Pengaturan</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="flex items-center justify-between py-2">
+                            <div>
+                                <p class="font-medium">Mode Gelap</p>
+                                <p class="text-sm" style="color: var(--text-muted);">Aktifkan tampilan gelap</p>
+                            </div>
+                            <div id="darkModeToggle" class="toggle-switch" role="switch" aria-checked="false" tabindex="0"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="flex items-center justify-between py-2">
+                            <div>
+                                <p class="font-medium">Notifikasi</p>
+                                <p class="text-sm" style="color: var(--text-muted);">Terima notifikasi transaksi</p>
+                            </div>
+                            <div id="notifToggle" class="toggle-switch active" role="switch" aria-checked="true" tabindex="0"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h4 class="font-display font-bold mb-3">Tentang Aplikasi</h4>
+                        <div class="space-y-2 text-sm" style="color: var(--text-secondary);">
+                            <p>OntaresID v1.0.0</p>
+                            <p>Platform investasi digital terpercaya dengan transaksi aman dan cepat.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Coin Detail Page -->
+            <div id="coinDetailPage" class="page">
+                <div class="p-6">
+                    <button id="backToHome" class="flex items-center gap-2 mb-6 transition-all hover:opacity-70" style="color: var(--accent);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        Kembali
+                    </button>
+                    
+                    <div class="flex items-center gap-4 mb-6">
+                        <div id="coinDetailIcon" class="w-14 h-14 rounded-xl flex items-center justify-center">
+                            <!-- Icon -->
+                        </div>
+                        <div>
+                            <h2 class="font-display text-2xl font-bold" id="coinDetailName">Koin</h2>
+                            <p class="text-sm" style="color: var(--text-secondary);" id="coinDetailSymbol">SYM</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Price Card -->
+                    <div class="card mb-6">
+                        <p class="text-sm mb-1" style="color: var(--text-secondary);">Harga Saat Ini</p>
+                        <p class="font-display text-3xl font-bold" id="coinDetailPrice">Rp 0</p>
+                        <p class="text-sm mt-2" id="coinDetailChange">+0%</p>
+                    </div>
+                    
+                    <!-- Chart -->
+                    <div class="card mb-6">
+                        <h4 class="font-display font-bold mb-4">Grafik Harga (24 Jam)</h4>
+                        <div style="height: 200px;">
+                            <canvas id="coinChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Trade Buttons -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="buyCoinBtn" class="btn btn-primary">Beli</button>
+                        <button id="sellCoinBtn" class="btn btn-danger">Jual</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Navigation -->
+            <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+                <div class="nav-item active" data-page="homePage" role="button" tabindex="0" aria-label="Home">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <span>Home</span>
+                </div>
+                <div class="nav-item" data-page="profilePage" role="button" tabindex="0" aria-label="Profil">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span>Profil</span>
+                </div>
+                <div class="nav-item" data-page="settingsPage" role="button" tabindex="0" aria-label="Pengaturan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                    </svg>
+                    <span>Pengaturan</span>
+                </div>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- Deposit Modal -->
+    <div id="depositModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-display text-xl font-bold">Deposit Saldo</h3>
+                <button class="close-modal p-2 rounded-lg transition-all" style="background: var(--bg-secondary);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-4 p-4 rounded-xl" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2);">
+                <p class="text-sm" style="color: var(--gold);">
+                    Minimal deposit: Rp 1.000. Pembayaran melalui QRIS.
+                </p>
+            </div>
+            
+            <form id="depositForm">
+                <div class="input-group">
+                    <label for="depositAmount">Jumlah Deposit</label>
+                    <input type="number" id="depositAmount" class="input" placeholder="Minimal 1000" min="1000" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Bayar dengan QRIS</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Withdraw Modal -->
+    <div id="withdrawModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-display text-xl font-bold">Withdraw Saldo</h3>
+                <button class="close-modal p-2 rounded-lg transition-all" style="background: var(--bg-secondary);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-4 p-4 rounded-xl" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);">
+                <p class="text-sm" style="color: var(--danger);">
+                    Minimal withdraw: Rp 1.000. Biaya admin: Rp 1.500.
+                </p>
+            </div>
+            
+            <form id="withdrawForm">
+                <div class="input-group">
+                    <label for="withdrawAmount">Jumlah Withdraw</label>
+                    <input type="number" id="withdrawAmount" class="input" placeholder="Minimal 1000" min="1000" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Metode Pembayaran</label>
+                    <select id="withdrawMethod" class="input">
+                        <option value="dana">DANA</option>
+                        <option value="ovo">OVO</option>
+                        <option value="gopay">GoPay</option>
+                        <option value="bank">Transfer Bank</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="withdrawDestination">Nomor Tujuan</label>
+                    <input type="text" id="withdrawDestination" class="input" placeholder="Nomor rekening/e-wallet" required>
+                </div>
+                
+                <!-- Saved Accounts -->
+                <div id="savedAccountsSection" class="mb-4" style="display: none;">
+                    <label class="text-sm font-medium mb-2 block" style="color: var(--text-secondary);">Nomor Tersimpan</label>
+                    <div id="savedAccountsList" class="space-y-2">
+                        <!-- Saved accounts will be rendered here -->
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2 mb-4">
+                    <input type="checkbox" id="saveAccount" class="w-4 h-4 rounded" style="accent-color: var(--accent);">
+                    <label for="saveAccount" class="text-sm" style="color: var(--text-secondary);">Simpan nomor tujuan</label>
+                </div>
+                
+                <button type="submit" class="btn btn-gold">Withdraw</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Trade Modal -->
+    <div id="tradeModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-display text-xl font-bold" id="tradeModalTitle">Beli Koin</h3>
+                <button class="close-modal p-2 rounded-lg transition-all" style="background: var(--bg-secondary);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-4 p-4 rounded-xl" style="background: var(--bg-secondary);">
+                <div class="flex justify-between items-center">
+                    <span style="color: var(--text-secondary);">Harga per koin:</span>
+                    <span class="font-bold" id="tradeCoinPrice">Rp 0</span>
+                </div>
+                <div class="flex justify-between items-center mt-2">
+                    <span style="color: var(--text-secondary);">Saldo Anda:</span>
+                    <span class="font-bold" id="tradeUserBalance">Rp 0</span>
+                </div>
+            </div>
+            
+            <form id="tradeForm">
+                <div class="input-group">
+                    <label for="tradeAmount">Jumlah (Rp)</label>
+                    <input type="number" id="tradeAmount" class="input" placeholder="Masukkan jumlah" min="1000" required>
+                </div>
+                
+                <div class="p-4 rounded-xl mb-4" style="background: var(--bg-secondary);">
+                    <p class="text-sm" style="color: var(--text-secondary);">Anda akan mendapat:</p>
+                    <p class="font-display text-2xl font-bold" style="color: var(--accent);" id="tradeResult">0 koin</p>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="tradeSubmitBtn">Konfirmasi</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[400]" style="display: none;">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script>
+        // ==========================================
+        // FIREBASE CONFIGURATION
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAqz8gKjEMOTzVQSkMetSR9RFj0M-VPl2k",
+            authDomain: "bitser.firebaseapp.com",
+            projectId: "bitser",
+            storageBucket: "bitser.firebasestorage.app",
+            messagingSenderId: "388010378665",
+            appId: "1:388010378665:web:9f4f74460bec438486b0b8",
+            measurementId: "G-RQ3DSV979Q"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        // ==========================================
+        // GLOBAL STATE
+        // ==========================================
+        let currentUser = null;
+        let userData = null;
+        let currentCoin = null;
+        let tradeType = 'buy';
+        let coinChart = null;
+        let priceHistory = {
+            'Ores': [],
+            'DitX': [],
+            'NamrA': []
+        };
+        
+        // Coin data with initial prices
+        const coins = [
+            {
+                id: 'ores',
+                name: 'Ores',
+                symbol: 'ORS',
+                price: 2500,
+                change: 0,
+                color: '#10b981',
+                icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>`
+            },
+            {
+                id: 'ditx',
+                name: 'DitX',
+                symbol: 'DTX',
+                price: 1800,
+                change: 0,
+                color: '#f59e0b',
+                icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v12M8 10l4-4 4 4M8 14l4 4 4-4"/>
+                </svg>`
+            },
+            {
+                id: 'namra',
+                name: 'NamrA',
+                symbol: 'NMA',
+                price: 3200,
+                change: 0,
+                color: '#8b5cf6',
+                icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>`
+            }
+        ];
+        
+        // ==========================================
+        // UTILITY FUNCTIONS
+        // ==========================================
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+        
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${type === 'success' ? '#10b981' : '#ef4444'}" stroke-width="2">
+                    ${type === 'success' 
+                        ? '<path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>'
+                        : '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'}
+                </svg>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        function showLoading(show = true) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
+        
+        // ==========================================
+        // PRICE SIMULATION ALGORITHM
+        // ==========================================
+        function initializePriceHistory() {
+            coins.forEach(coin => {
+                priceHistory[coin.name] = [];
+                let price = coin.price;
+                for (let i = 0; i < 24; i++) {
+                    // Random walk with mean reversion
+                    const change = (Math.random() - 0.48) * (price * 0.02);
+                    price = Math.max(price * 0.9, Math.min(price * 1.1, price + change));
+                    priceHistory[coin.name].push(price);
+                }
+            });
+        }
+        
+        function simulatePriceChanges() {
+            coins.forEach(coin => {
+                const lastPrice = priceHistory[coin.name][priceHistory[coin.name].length - 1] || coin.price;
+                
+                // Mean reversion + small random movement
+                // Bias towards slight increase (admin & user profit)
+                const trend = (coin.price * 1.001 - lastPrice) * 0.1;
+                const random = (Math.random() - 0.45) * (lastPrice * 0.005);
+                const newPrice = Math.max(coin.price * 0.8, lastPrice + trend + random);
+                
+                priceHistory[coin.name].push(newPrice);
+                if (priceHistory[coin.name].length > 24) {
+                    priceHistory[coin.name].shift();
+                }
+                
+                coin.price = newPrice;
+                const firstPrice = priceHistory[coin.name][0];
+                coin.change = ((newPrice - firstPrice) / firstPrice) * 100;
+            });
+            
+            renderCoinList();
+        }
+        
+        // ==========================================
+        // AUTH FUNCTIONS
+        // ==========================================
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            showLoading(true);
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                showToast('Berhasil masuk!');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+            showLoading(false);
+        }
+        
+        async function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const phone = document.getElementById('registerPhone').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            showLoading(true);
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await userCredential.user.updateProfile({ displayName: name });
+                
+                // Create user document in Firestore
+                await db.collection('users').doc(userCredential.user.uid).set({
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    coinBalance: 0,
+                    coins: {
+                        ores: 0,
+                        ditx: 0,
+                        namra: 0
+                    },
+                    savedAccounts: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                showToast('Pendaftaran berhasil!');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+            showLoading(false);
+        }
+        
+        async function handleGoogleLogin() {
+            showLoading(true);
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const result = await auth.signInWithPopup(provider);
+                
+                // Check if user document exists
+                const userDoc = await db.collection('users').doc(result.user.uid).get();
+                if (!userDoc.exists) {
+                    await db.collection('users').doc(result.user.uid).set({
+                        name: result.user.displayName,
+                        email: result.user.email,
+                        phone: result.user.phoneNumber || '-',
+                        coinBalance: 0,
+                        coins: {
+                            ores: 0,
+                            ditx: 0,
+                            namra: 0
+                        },
+                        savedAccounts: [],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                showToast('Berhasil masuk dengan Google!');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+            showLoading(false);
+        }
+        
+        async function handleLogout() {
+            try {
+                await auth.signOut();
+                currentUser = null;
+                userData = null;
+                document.getElementById('authPage').classList.add('active');
+                document.getElementById('mainApp').style.display = 'none';
+                showToast('Berhasil keluar');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+        
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (newPassword !== confirmPassword) {
+                showToast('Password tidak cocok!', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            try {
+                const credential = firebase.auth.EmailAuthProvider.credential(
+                    currentUser.email, 
+                    currentPassword
+                );
+                await currentUser.reauthenticateWithCredential(credential);
+                await currentUser.updatePassword(newPassword);
+                showToast('Password berhasil diubah!');
+                e.target.reset();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+            showLoading(false);
+        }
+        
+        // ==========================================
+        // USER DATA FUNCTIONS
+        // ==========================================
+        async function loadUserData() {
+            if (!currentUser) return;
+            
+            try {
+                const doc = await db.collection('users').doc(currentUser.uid).get();
+                if (doc.exists) {
+                    userData = doc.data();
+                    updateUI();
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+        
+        function updateUI() {
+            if (!userData) return;
+            
+            // Update home
+            document.getElementById('userName').textContent = userData.name || 'User';
+            document.getElementById('balanceDisplay').textContent = formatCurrency(userData.coinBalance || 0);
+            
+            // Update profile
+            document.getElementById('profileName').textContent = userData.name || 'User';
+            document.getElementById('profileEmail').textContent = userData.email || '-';
+            document.getElementById('profilePhone').textContent = userData.phone || '-';
+            document.getElementById('profileInitial').textContent = (userData.name || 'U').charAt(0).toUpperCase();
+            
+            if (userData.createdAt) {
+                const date = userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt);
+                document.getElementById('profileJoinDate').textContent = date.toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+            }
+            
+            // Update saved accounts
+            renderSavedAccounts();
+        }
+        
+        // ==========================================
+        // COIN FUNCTIONS
+        // ==========================================
+        function renderCoinList() {
+            const container = document.getElementById('coinList');
+            container.innerHTML = coins.map((coin, index) => `
+                <div class="coin-card" data-coin-id="${coin.id}" style="animation: slideUp ${0.3 + index * 0.1}s ease;">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: ${coin.color}20; color: ${coin.color};">
+                                ${coin.icon}
+                            </div>
+                            <div>
+                                <p class="font-display font-bold">${coin.name}</p>
+                                <p class="text-sm" style="color: var(--text-muted);">${coin.symbol}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-display font-bold">${formatCurrency(coin.price)}</p>
+                            <p class="text-sm ${coin.change >= 0 ? 'price-up' : 'price-down'}">
+                                ${coin.change >= 0 ? '+' : ''}${coin.change.toFixed(2)}%
+                            </p>
+                        </div>
+                    </div>
+                    <canvas id="miniChart${coin.id}" class="mini-chart absolute bottom-2 right-2 opacity-30"></canvas>
+                </div>
+            `).join('');
+            
+            // Add click handlers
+            document.querySelectorAll('.coin-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const coinId = card.dataset.coinId;
+                    openCoinDetail(coinId);
+                });
+            });
+            
+            // Draw mini charts
+            coins.forEach(coin => {
+                drawMiniChart(coin);
+            });
+        }
+        
+        function drawMiniChart(coin) {
+            const canvas = document.getElementById(`miniChart${coin.id}`);
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            canvas.width = 80;
+            canvas.height = 40;
+            
+            const data = priceHistory[coin.name];
+            if (!data || data.length === 0) return;
+            
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+            const range = max - min || 1;
+            
+            ctx.beginPath();
+            ctx.strokeStyle = coin.color;
+            ctx.lineWidth = 2;
+            
+            data.forEach((value, i) => {
+                const x = (i / (data.length - 1)) * 80;
+                const y = 40 - ((value - min) / range) * 35;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            
+            ctx.stroke();
+        }
+        
+        function openCoinDetail(coinId) {
+            currentCoin = coins.find(c => c.id === coinId);
+            if (!currentCoin) return;
+            
+            // Update detail page
+            document.getElementById('coinDetailName').textContent = currentCoin.name;
+            document.getElementById('coinDetailSymbol').textContent = currentCoin.symbol;
+            document.getElementById('coinDetailPrice').textContent = formatCurrency(currentCoin.price);
+            
+            const changeEl = document.getElementById('coinDetailChange');
+            changeEl.textContent = `${currentCoin.change >= 0 ? '+' : ''}${currentCoin.change.toFixed(2)}%`;
+            changeEl.className = `text-sm mt-2 ${currentCoin.change >= 0 ? 'price-up' : 'price-down'}`;
+            
+            document.getElementById('coinDetailIcon').innerHTML = currentCoin.icon;
+            document.getElementById('coinDetailIcon').style.background = `${currentCoin.color}20`;
+            document.getElementById('coinDetailIcon').style.color = currentCoin.color;
+            
+            // Draw main chart
+            drawMainChart();
+            
+            // Navigate to detail page
+            document.querySelectorAll('#mainApp .page').forEach(p => p.classList.remove('active'));
+            document.getElementById('coinDetailPage').classList.add('active');
+        }
+        
+        function drawMainChart() {
+            const canvas = document.getElementById('coinChart');
+            if (!canvas || !currentCoin) return;
+            
+            const ctx = canvas.getContext('2d');
+            const data = priceHistory[currentCoin.name];
+            if (!data || data.length === 0) return;
+            
+            if (coinChart) {
+                coinChart.destroy();
+            }
+            
+            const labels = Array.from({length: data.length}, (_, i) => `${i}h`);
+            
+            coinChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Harga',
+                        data: data,
+                        borderColor: currentCoin.color,
+                        backgroundColor: `${currentCoin.color}20`,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: currentCoin.color,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: (context) => formatCurrency(context.raw)
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#6b7280' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(107, 114, 128, 0.1)' },
+                            ticks: {
+                                color: '#6b7280',
+                                callback: (value) => formatCurrency(value)
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+        
+        // ==========================================
+        // TRANSACTION FUNCTIONS
+        // ==========================================
+        function openDepositModal() {
+            document.getElementById('depositModal').classList.add('active');
+            document.getElementById('depositForm').reset();
+        }
+        
+        function openWithdrawModal() {
+            document.getElementById('withdrawModal').classList.add('active');
+            document.getElementById('withdrawForm').reset();
+            renderSavedAccounts();
+        }
+        
+        async function handleDeposit(e) {
+            e.preventDefault();
+            const amount = parseInt(document.getElementById('depositAmount').value);
+            
+            if (amount < 1000) {
+                showToast('Minimal deposit Rp 1.000', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                // Generate order ID
+                const timestamp = Date.now();
+                const orderId = `${currentUser.uid}_${timestamp}`;
+                
+                // Create pending transaction
+                await db.collection('transactions').add({
+                    orderId: orderId,
+                    userId: currentUser.uid,
+                    amount: amount,
+                    type: 'deposit',
+                    status: 'pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Close modal and redirect to payment
+                document.getElementById('depositModal').classList.remove('active');
+                
+                showToast('Mengalihkan ke halaman pembayaran...');
+                
+                // Open QRIS payment in new tab
+                setTimeout(() => {
+                    window.open(`https://qris.pw/pay/3AA31057?amount=${amount}&orderid=${orderId}`, '_blank');
+                }, 1000);
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+            
+            showLoading(false);
+        }
+        
+        async function handleWithdraw(e) {
+            e.preventDefault();
+            const amount = parseInt(document.getElementById('withdrawAmount').value);
+            const method = document.getElementById('withdrawMethod').value;
+            const destination = document.getElementById('withdrawDestination').value;
+            const saveAccount = document.getElementById('saveAccount').checked;
+            
+            const adminFee = 1500;
+            const totalDeduction = amount + adminFee;
+            
+            if (amount < 1000) {
+                showToast('Minimal withdraw Rp 1.000', 'error');
+                return;
+            }
+            
+            if (totalDeduction > (userData.coinBalance || 0)) {
+                showToast('Saldo tidak mencukupi', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                // Update balance
+                await db.collection('users').doc(currentUser.uid).update({
+                    coinBalance: firebase.firestore.FieldValue.increment(-totalDeduction)
+                });
+                
+                // Save account if checked
+                if (saveAccount) {
+                    await db.collection('users').doc(currentUser.uid).update({
+                        savedAccounts: firebase.firestore.FieldValue.arrayUnion({
+                            method: method,
+                            number: destination,
+                            savedAt: Date.now()
+                        })
+                    });
+                }
+                
+                // Create transaction record
+                await db.collection('transactions').add({
+                    userId: currentUser.uid,
+                    amount: amount,
+                    adminFee: adminFee,
+                    method: method,
+                    destination: destination,
+                    type: 'withdraw',
+                    status: 'completed',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Reload user data
+                await loadUserData();
+                
+                document.getElementById('withdrawModal').classList.remove('active');
+                showToast('Withdraw berhasil diproses!');
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+            
+            showLoading(false);
+        }
+        
+        function renderSavedAccounts() {
+            const section = document.getElementById('savedAccountsSection');
+            const list = document.getElementById('savedAccountsList');
+            
+            if (!userData || !userData.savedAccounts || userData.savedAccounts.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            
+            section.style.display = 'block';
+            list.innerHTML = userData.savedAccounts.map((acc, i) => `
+                <div class="saved-account" data-number="${acc.number}">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-sm">${acc.method.toUpperCase()}</p>
+                            <p class="text-xs" style="color: var(--text-muted);">${acc.number}</p>
+                        </div>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-muted);">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add click handlers
+            list.querySelectorAll('.saved-account').forEach(acc => {
+                acc.addEventListener('click', () => {
+                    document.getElementById('withdrawDestination').value = acc.dataset.number;
+                    list.querySelectorAll('.saved-account').forEach(a => a.classList.remove('selected'));
+                    acc.classList.add('selected');
+                });
+            });
+        }
+        
+        // ==========================================
+        // TRADE FUNCTIONS
+        // ==========================================
+        function openTradeModal(type) {
+            tradeType = type;
+            
+            document.getElementById('tradeModalTitle').textContent = type === 'buy' ? 'Beli Koin' : 'Jual Koin';
+            document.getElementById('tradeCoinPrice').textContent = formatCurrency(currentCoin.price);
+            document.getElementById('tradeUserBalance').textContent = formatCurrency(userData.coinBalance || 0);
+            document.getElementById('tradeAmount').value = '';
+            document.getElementById('tradeResult').textContent = '0 koin';
+            
+            const submitBtn = document.getElementById('tradeSubmitBtn');
+            submitBtn.className = `btn ${type === 'buy' ? 'btn-primary' : 'btn-danger'}`;
+            submitBtn.textContent = type === 'buy' ? 'Beli' : 'Jual';
+            
+            document.getElementById('tradeModal').classList.add('active');
+        }
+        
+        function updateTradeResult() {
+            const amount = parseInt(document.getElementById('tradeAmount').value) || 0;
+            const coinsAmount = amount / currentCoin.price;
+            document.getElementById('tradeResult').textContent = `${coinsAmount.toFixed(4)} ${currentCoin.symbol}`;
+        }
+        
+        async function handleTrade(e) {
+            e.preventDefault();
+            const amount = parseInt(document.getElementById('tradeAmount').value);
+            
+            if (amount < 1000) {
+                showToast('Minimal transaksi Rp 1.000', 'error');
+                return;
+            }
+            
+            if (tradeType === 'buy' && amount > (userData.coinBalance || 0)) {
+                showToast('Saldo tidak mencukupi', 'error');
+                return;
+            }
+            
+            const coinsAmount = amount / currentCoin.price;
+            
+            showLoading(true);
+            
+            try {
+                if (tradeType === 'buy') {
+                    // Deduct balance, add coins
+                    await db.collection('users').doc(currentUser.uid).update({
+                        coinBalance: firebase.firestore.FieldValue.increment(-amount),
+                        [`coins.${currentCoin.id}`]: firebase.firestore.FieldValue.increment(coinsAmount)
+                    });
+                } else {
+                    // Check if user has enough coins
+                    const userCoins = userData.coins ? userData.coins[currentCoin.id] || 0 : 0;
+                    if (coinsAmount > userCoins) {
+                        showToast('Koin tidak mencukupi', 'error');
+                        showLoading(false);
+                        return;
+                    }
+                    
+                    // Add balance, deduct coins
+                    await db.collection('users').doc(currentUser.uid).update({
+                        coinBalance: firebase.firestore.FieldValue.increment(amount),
+                        [`coins.${currentCoin.id}`]: firebase.firestore.FieldValue.increment(-coinsAmount)
+                    });
+                }
+                
+                // Create transaction record
+                await db.collection('transactions').add({
+                    userId: currentUser.uid,
+                    coinId: currentCoin.id,
+                    coinName: currentCoin.name,
+                    type: tradeType,
+                    amount: amount,
+                    coinsAmount: coinsAmount,
+                    price: currentCoin.price,
+                    status: 'completed',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                await loadUserData();
+                
+                document.getElementById('tradeModal').classList.remove('active');
+                showToast(`${tradeType === 'buy' ? 'Pembelian' : 'Penjualan'} berhasil!`);
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+            
+            showLoading(false);
+        }
+        
+        // ==========================================
+        // NAVIGATION
+        // ==========================================
+        function setupNavigation() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const pageId = item.dataset.page;
+                    
+                    // Update active states
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    // Show page
+                    document.querySelectorAll('#mainApp .page').forEach(p => {
+                        if (p.id !== 'coinDetailPage') {
+                            p.classList.remove('active');
+                        }
+                    });
+                    document.getElementById(pageId).classList.add('active');
+                });
+                
+                // Keyboard support
+                item.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        item.click();
+                    }
+                });
+            });
+        }
+        
+        // ==========================================
+        // MODAL HANDLERS
+        // ==========================================
+        function setupModals() {
+            // Close buttons
+            document.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+                });
+            });
+            
+            // Click outside to close
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
+            });
+        }
+        
+        // ==========================================
+        // DARK MODE
+        // ==========================================
+        function setupDarkMode() {
+            const toggle = document.getElementById('darkModeToggle');
+            const savedMode = localStorage.getItem('darkMode');
+            
+            if (savedMode === 'true') {
+                document.documentElement.classList.add('dark');
+                toggle.classList.add('active');
+                toggle.setAttribute('aria-checked', 'true');
+            }
+            
+            toggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                toggle.classList.toggle('active');
+                const isDark = document.documentElement.classList.contains('dark');
+                localStorage.setItem('darkMode', isDark);
+                toggle.setAttribute('aria-checked', isDark.toString());
+            });
+            
+            // Keyboard support
+            toggle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggle.click();
+                }
+            });
+        }
+        
+        // ==========================================
+        // AUTH TABS
+        // ==========================================
+        function setupAuthTabs() {
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            
+            loginTab.addEventListener('click', () => {
+                loginTab.style.background = 'var(--accent)';
+                loginTab.style.color = 'white';
+                registerTab.style.background = 'transparent';
+                registerTab.style.color = 'var(--text-secondary)';
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            });
+            
+            registerTab.addEventListener('click', () => {
+                registerTab.style.background = 'var(--accent)';
+                registerTab.style.color = 'white';
+                loginTab.style.background = 'transparent';
+                loginTab.style.color = 'var(--text-secondary)';
+                registerForm.style.display = 'block';
+                loginForm.style.display = 'none';
+            });
+        }
+        
+        // ==========================================
+        // EVENT LISTENERS
+        // ==========================================
+        function setupEventListeners() {
+            // Auth forms
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            document.getElementById('googleLoginBtn').addEventListener('click', handleGoogleLogin);
+            document.getElementById('googleRegisterBtn').addEventListener('click', handleGoogleLogin);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            document.getElementById('changePasswordForm').addEventListener('submit', handleChangePassword);
+            
+            // Action buttons
+            document.getElementById('depositBtn').addEventListener('click', openDepositModal);
+            document.getElementById('withdrawBtn').addEventListener('click', openWithdrawModal);
+            
+            // Transaction forms
+            document.getElementById('depositForm').addEventListener('submit', handleDeposit);
+            document.getElementById('withdrawForm').addEventListener('submit', handleWithdraw);
+            
+            // Trade
+            document.getElementById('buyCoinBtn').addEventListener('click', () => openTradeModal('buy'));
+            document.getElementById('sellCoinBtn').addEventListener('click', () => openTradeModal('sell'));
+            document.getElementById('tradeForm').addEventListener('submit', handleTrade);
+            document.getElementById('tradeAmount').addEventListener('input', updateTradeResult);
+            
+            // Navigation
+            document.getElementById('backToHome').addEventListener('click', () => {
+                document.querySelectorAll('#mainApp .page').forEach(p => p.classList.remove('active'));
+                document.getElementById('homePage').classList.add('active');
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                document.querySelector('.nav-item[data-page="homePage"]').classList.add('active');
+            });
+            
+            // Refresh market
+            document.getElementById('refreshMarket').addEventListener('click', () => {
+                simulatePriceChanges();
+                showToast('Harga pasar diperbarui');
+            });
+            
+            // Notification toggle
+            document.getElementById('notifToggle').addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        }
+        
+        // ==========================================
+        // AUTH STATE OBSERVER
+        // ==========================================
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                loadUserData();
+                document.getElementById('authPage').classList.remove('active');
+                document.getElementById('mainApp').style.display = 'block';
+            } else {
+                currentUser = null;
+                userData = null;
+                document.getElementById('authPage').classList.add('active');
+                document.getElementById('mainApp').style.display = 'none';
+            }
+        });
+        
+        // ==========================================
+        // REALTIME USER DATA LISTENER
+        // ==========================================
+        function setupUserListener() {
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    db.collection('users').doc(user.uid).onSnapshot((doc) => {
+                        if (doc.exists) {
+                            userData = doc.data();
+                            updateUI();
+                        }
+                    });
+                }
+            });
+        }
+        
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            setupAuthTabs();
+            setupNavigation();
+            setupModals();
+            setupDarkMode();
+            setupEventListeners();
+            setupUserListener();
+            
+            // Initialize price history
+            initializePriceHistory();
+            
+            // Initial render
+            renderCoinList();
+            
+            // Start price simulation (every 30 seconds)
+            setInterval(simulatePriceChanges, 30000);
+        });
+    </script>
+</body>
+</html>
