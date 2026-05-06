@@ -1,0 +1,11 @@
+{
+  "name": "ontares-id-backend",
+  "version": "1.0.0",
+  "description": "Backend for OntaresID Coin Exchange",
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^11.0.0"
+  },
+  "author": "OntaresID",
+  "license": "ISC"
+}
